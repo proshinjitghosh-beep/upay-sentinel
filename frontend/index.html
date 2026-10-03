@@ -6,40 +6,57 @@
 <title>Upay Sentinel — Risk Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem("theme");if(!t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)t="dark";if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
-:root{--ground:#EEF1F5;--panel:#fff;--ink:#0E1B2C;--muted:#5B6B7F;--line:#D5DCE5;--blue:#1F4FA3;--yellow:#F5B800;--red:#C8372D;--green:#2E7D4F}
+:root{--ground:#EEF1F5;--panel:#fff;--ink:#0E1B2C;--muted:#5B6B7F;--line:#D5DCE5;--blue:#1F4FA3;--yellow:#F5B800;--red:#C8372D;--green:#2E7D4F;--soft:#F3F6FB;--svgbg:#F8FAFC;--head:#0E1B2C;--edge:#8A99AD;--watch:#8A6500;--onink:#fff}
+:root[data-theme="dark"]{--ground:#0B1220;--panel:#121C2E;--ink:#E8EEF7;--muted:#93A3B8;--line:#243349;--blue:#6EA0FF;--red:#FF6B5E;--green:#4CC38A;--soft:#1A2740;--svgbg:#0E1727;--head:#070D18;--edge:#7F90A8;--watch:#F5B800;--onink:#0B1220}
 *{box-sizing:border-box}
-body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.5 "Public Sans",system-ui,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
-header{background:var(--ink);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-header h1{margin:0;font-size:20px;font-weight:800}
-header span{color:#B9C4D3;font-size:13px}
-header .eng{margin-left:auto;background:var(--yellow);color:var(--ink);padding:2px 10px;border-radius:12px;font-weight:600;font-size:13px}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.5 "Public Sans",system-ui,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;transition:background .35s,color .35s}
+.panel,.stat,svg,.item,.res,input,button.act,th,td{transition:background .35s,border-color .35s,color .35s}
+header{background:var(--head);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:20px;font-weight:800}header span{color:#B9C4D3;font-size:13px}
+header .eng{margin-left:auto;background:var(--yellow);color:#0E1B2C;padding:2px 10px;border-radius:12px;font-weight:600;font-size:13px}
+.tg{font:inherit;font-size:13px;font-weight:600;background:transparent;color:#fff;border:1px solid #5B6B7F;border-radius:14px;padding:3px 12px;cursor:pointer}.tg:hover{background:#ffffff1f}
 main{max-width:1280px;margin:0 auto;padding:20px 24px 48px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px}
-.stat{background:var(--panel);border:1px solid var(--line);padding:12px 16px;border-radius:6px}
+.stat{background:var(--panel);border:1px solid var(--line);padding:12px 16px;border-radius:6px;animation:fade .5s ease both}
+.stat:hover{transform:translateY(-2px);box-shadow:0 6px 18px #0000001a;transition:transform .2s,box-shadow .2s}
 .stat b{display:block;font-size:26px;font-weight:800}.stat small{color:var(--muted)}
-.cols{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
-@media(max-width:900px){.cols{grid-template-columns:1fr}}
+.cols{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}@media(max-width:900px){.cols{grid-template-columns:1fr}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
 h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:16px 0 6px}
 .list{max-height:680px;overflow:auto;padding:0}
 .item{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 14px;cursor:pointer;font:inherit;color:inherit}
-.item:hover,.item.sel{background:#F3F6FB}.item.sel{box-shadow:inset 4px 0 0 var(--blue)}
-.item .r{display:flex;justify-content:space-between;align-items:center;font-weight:600}
-.item small{color:var(--muted)}
-.bar{height:5px;background:var(--line);border-radius:3px;margin:6px 0 2px}.bar i{display:block;height:100%;border-radius:3px}
+.item:hover,.item.sel{background:var(--soft)}.item.sel{box-shadow:inset 4px 0 0 var(--blue)}
+.item .r{display:flex;justify-content:space-between;align-items:center;font-weight:600}.item small{color:var(--muted)}
+.bar{height:5px;background:var(--line);border-radius:3px;margin:6px 0 2px;overflow:hidden}.bar i{display:block;height:100%;border-radius:3px;animation:grow .8s ease both}
 .tag{font-size:12px;font-weight:600;padding:1px 8px;border-radius:10px;border:1px solid}
-.HOLD{color:var(--red);border-color:var(--red)}.WATCH{color:#8A6500;border-color:var(--yellow)}.CLEAR{color:var(--green);border-color:var(--green)}
+.HOLD{color:var(--red);border-color:var(--red)}.WATCH{color:var(--watch);border-color:var(--yellow)}.CLEAR{color:var(--green);border-color:var(--green)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:8px;animation:pulse 1.6s infinite}
+.tabs{display:flex;gap:6px;padding:12px 14px 8px;flex-wrap:wrap;align-items:center}
+.tab{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:none;color:var(--muted);border-radius:14px;padding:2px 10px;cursor:pointer}
+.tab.on{background:var(--ink);color:var(--onink);border-color:var(--ink)}
+.q{width:100%;margin:0 14px 6px;width:calc(100% - 28px)}
 .head{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}.risk{font-size:44px;font-weight:800;line-height:1}
-button.act{font:inherit;font-weight:600;padding:7px 14px;border-radius:4px;border:1px solid var(--ink);background:#fff;cursor:pointer;margin:0 8px 8px 0}
-button.act.p{background:var(--ink);color:#fff}button:focus-visible,.item:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
-input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:4px;width:120px}
-svg{width:100%;height:auto;background:#F8FAFC;border:1px solid var(--line);border-radius:4px}
+button.act{font:inherit;font-weight:600;padding:7px 14px;border-radius:4px;border:1px solid var(--ink);background:var(--panel);color:var(--ink);cursor:pointer;margin:0 8px 8px 0}
+button.act:hover{transform:translateY(-1px)}button.act.p{background:var(--ink);color:var(--onink)}
+button:focus-visible,.item:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:4px;width:120px;background:var(--panel);color:var(--ink)}
+svg{width:100%;height:auto;background:var(--svgbg);border:1px solid var(--line);border-radius:4px}
+.ed{stroke:var(--edge);stroke-dasharray:7 5;opacity:0;animation:show .5s ease forwards,flow 1s linear infinite}
+.nd{opacity:0;animation:show .5s ease forwards}.arw{fill:var(--edge)}.tl{fill:var(--ink)}.am{fill:var(--muted)}
 ul{margin:4px 0;padding-left:20px}.empty{color:var(--muted);padding:24px;text-align:center}
 table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px;flex-wrap:wrap}.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
-.res{margin-top:6px;padding:8px 12px;border-left:4px solid;background:#F8FAFC}.err{color:var(--red)}
+.res{margin-top:6px;padding:8px 12px;border-left:4px solid;background:var(--svgbg);animation:fade .3s ease both}.err{color:var(--red)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.fade{animation:fade .4s ease both}.skel{height:14px;border-radius:4px;background:linear-gradient(90deg,var(--line),var(--soft),var(--line));background-size:200% 100%;animation:sh 1.2s linear infinite;margin:10px 0}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--ink);color:var(--onink);padding:10px 16px;border-radius:6px;animation:fade .3s ease both;z-index:9}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes grow{from{width:0}}@keyframes show{to{opacity:1}}@keyframes flow{to{stroke-dashoffset:-24}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #c8372d88}70%{box-shadow:0 0 0 7px #c8372d00}100%{box-shadow:0 0 0 0 #c8372d00}}
+@keyframes sh{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ed,.nd{opacity:1!important}}
 </style>
 </head>
 <body>
@@ -56,41 +73,48 @@ const taka=n=>"৳"+Math.round(n).toLocaleString("en-IN"), pct=x=>Math.round(x*1
 const barColor=r=>r>=85?"var(--red)":r>=60?"var(--yellow)":"var(--green)";
 const STATUS={pending_review:"awaiting analyst",confirm_hold:"hold confirmed",release:"released",escalate:"escalated",none:""};
 
+function Count({v,d=0}){
+  const [x,setX]=useState(0);
+  useEffect(()=>{let f,s=null;const run=t=>{s=s??t;const p=Math.min((t-s)/700,1);setX(v*(1-Math.pow(1-p,3)));if(p<1)f=requestAnimationFrame(run)};
+    f=requestAnimationFrame(run);return()=>cancelAnimationFrame(f)},[v]);
+  return <>{d?x.toFixed(d):Math.round(x).toLocaleString()}</>;
+}
+
 function Trail({trail,focus}){
   const {nodes,edges}=trail;
   if(!nodes.length) return <div className="empty">No inbound transfer to trace for this account.</div>;
-  const layers={}; nodes.forEach(n=>(layers[n.depth]=layers[n.depth]||[]).push(n));
+  const layers={}, dp={}; nodes.forEach(n=>{(layers[n.depth]=layers[n.depth]||[]).push(n);dp[n.id]=n.depth});
   const ds=Object.keys(layers).map(Number).sort((a,b)=>a-b), W=800, cw=W/ds.length;
   const H=Math.max(220,Math.max(...ds.map(d=>layers[d].length))*54+30), pos={};
   ds.forEach((d,c)=>layers[d].forEach((n,r)=>pos[n.id]={x:cw*c+cw/2,y:H/layers[d].length*(r+.5)}));
-  const maxA=Math.max(...edges.map(e=>e.amount));
+  const maxA=Math.max(...edges.map(e=>e.amount)), dl=d=>({animationDelay:`${(d+1)*.5}s`});
   const fill=n=>n.id===focus?"var(--yellow)":n.role==="agent"?"var(--red)":n.depth<0?"var(--blue)":n.risk>=85?"#E58A3A":"#8A99AD";
   return <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Money trail graph">
-    <defs><marker id="ar" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#8A99AD"/></marker></defs>
-    {edges.map((e,k)=>{const a=pos[e.src],b=pos[e.dst];if(!a||!b)return null;
-      return <g key={k}><line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#8A99AD" strokeWidth={1+3*e.amount/maxA} markerEnd="url(#ar)" opacity=".8"/>
-      <text x={(a.x+b.x)/2} y={(a.y+b.y)/2-4} fontSize="10" textAnchor="middle" fill="#5B6B7F">{taka(e.amount)}</text></g>})}
-    {nodes.map(n=><g key={n.id}><circle cx={pos[n.id].x} cy={pos[n.id].y} r={n.id===focus?13:9} fill={fill(n)} stroke="#0E1B2C" strokeWidth={n.id===focus?2:0}/>
-      <text x={pos[n.id].x} y={pos[n.id].y+24} fontSize="10" textAnchor="middle" fill="#0E1B2C">{n.label}</text></g>)}
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path className="arw" d="M0,0L10,5L0,10z"/></marker></defs>
+    {edges.map((e,k)=>{const a=pos[e.src],b=pos[e.dst];if(!a||!b)return null;const t=(dp[e.dst]+1)*.5;
+      return <g key={k}><line className="ed" style={{animationDelay:`${t}s, 0s`}} x1={a.x} y1={a.y} x2={b.x} y2={b.y} strokeWidth={1+3*e.amount/maxA} markerEnd="url(#ar)"/>
+      <text className="nd am" style={dl(dp[e.dst])} x={(a.x+b.x)/2} y={(a.y+b.y)/2-4} fontSize="10" textAnchor="middle">{taka(e.amount)}</text></g>})}
+    {nodes.map(n=><g key={n.id} className="nd" style={dl(n.depth-1)}><circle cx={pos[n.id].x} cy={pos[n.id].y} r={n.id===focus?13:9} fill={fill(n)} style={{stroke:"var(--ink)",strokeWidth:n.id===focus?2:0}}/>
+      <text className="tl" x={pos[n.id].x} y={pos[n.id].y+24} fontSize="10" textAnchor="middle">{n.label}</text></g>)}
   </svg>;
 }
 
-function Detail({id,onChanged}){
+function Detail({id,onChanged,toast}){
   const [d,setD]=useState(null), [err,setErr]=useState(""), [amt,setAmt]=useState(20000), [res,setRes]=useState(null);
   const load=useCallback(()=>call("/api/alerts/"+id).then(setD).catch(e=>setErr(e.message)),[id]);
   useEffect(()=>{setD(null);setRes(null);setErr("");load()},[load]);
   if(err) return <div className="panel err">{err}</div>;
-  if(!d) return <div className="panel empty">Loading trail…</div>;
-  const act=async a=>{try{await call(`/api/alerts/${id}/decision`,{method:"POST",body:JSON.stringify({action:a,analyst:"demo-analyst"})});await load();onChanged()}catch(e){setErr(e.message)}};
+  if(!d) return <div className="panel"><div className="skel" style={{width:"40%",height:40}}/><div className="skel"/><div className="skel" style={{height:200}}/><div className="skel" style={{width:"70%"}}/></div>;
+  const act=async a=>{try{await call(`/api/alerts/${id}/decision`,{method:"POST",body:JSON.stringify({action:a,analyst:"demo-analyst"})});toast({confirm_hold:"Hold confirmed",release:"Released as legitimate",escalate:"Escalated to compliance"}[a]);await load();onChanged()}catch(e){setErr(e.message)}};
   const check=async()=>{try{setRes(await call("/api/check-cashout",{method:"POST",body:JSON.stringify({account_id:id,amount:+amt})}))}catch(e){setErr(e.message)}};
   const n=d.narrative;
-  return <div className="panel">
-    <div className="head"><span className="risk" style={{color:barColor(d.risk)}}>{d.risk}</span>
+  return <div className="panel fade">
+    <div className="head"><span className="risk" style={{color:barColor(d.risk)}}><Count v={d.risk} d={1}/></span>
       <h2 style={{margin:0}}>{d.label}</h2><span className={"tag "+d.tier}>{d.tier}</span>
       <small>{STATUS[d.status]}{d.decision?` by ${d.decision.analyst}`:""}</small></div>
     <small>Graph {d.components.graph} · Behaviour anomaly {d.components.anomaly} · Rule {d.components.rule?"fired":"not fired"}</small>
     <h3>Where the money went (30-minute window)</h3>
-    <Trail trail={d.trail} focus={id}/>
+    <Trail key={id} trail={d.trail} focus={id}/>
     <div className="legend"><span><i style={{background:"var(--blue)"}}/>sender</span><span><i style={{background:"var(--yellow)"}}/>this account</span><span><i style={{background:"#E58A3A"}}/>high-risk account</span><span><i style={{background:"var(--red)"}}/>cash-out agent</span></div>
     <h3>What happened</h3><p style={{margin:0}}>{n.what}</p>
     <h3>Why it is risky</h3><ul>{n.why.map((w,i)=><li key={i}>{w}</li>)}</ul>
@@ -103,13 +127,13 @@ function Detail({id,onChanged}){
     <h3>Try a cash-out request</h3>
     <label>Amount (৳) <input type="number" value={amt} onChange={e=>setAmt(e.target.value)}/></label>{" "}
     <button className="act" onClick={check}>Check cash-out</button>
-    {res&&<div className="res" style={{borderColor:res.decision==="HOLD_AND_VERIFY"?"var(--red)":res.decision==="ALLOW"?"var(--green)":"var(--yellow)"}}><b>{res.decision.replaceAll("_"," ")}</b> — {res.message}</div>}
+    {res&&<div className="res" key={res.decision+amt} style={{borderColor:res.decision==="HOLD_AND_VERIFY"?"var(--red)":res.decision==="ALLOW"?"var(--green)":"var(--yellow)"}}><b>{res.decision.replaceAll("_"," ")}</b> — {res.message}</div>}
   </div>;
 }
 
 function Evidence({s}){
   const m=s.metrics, row=(n,x)=><tr><td>{n}</td><td>{pct(x.precision)}</td><td>{pct(x.recall)}</td><td>{x.fp}</td></tr>;
-  return <div className="grid2" style={{marginTop:18}}>
+  return <div className="grid2 fade" style={{marginTop:18}}>
     <div className="panel"><h2>Evidence on held-out accounts</h2>
       <table><thead><tr><th>Method</th><th>Precision</th><th>Recall</th><th>False alarms</th></tr></thead><tbody>
         {row("Fast pass-through rule only (hold ≥85)",m.rule_only)}{row("Anomaly model only",m.anomaly_only)}
@@ -123,30 +147,40 @@ function Evidence({s}){
 
 function App(){
   const [s,setS]=useState(null), [al,setAl]=useState([]), [sel,setSel]=useState(null), [err,setErr]=useState("");
-  const load=useCallback(()=>Promise.all([call("/api/summary"),call("/api/alerts?min_risk=60")]).then(([a,b])=>{setS(a);setAl(b);setSel(x=>x??(b[0]&&b[0].id))}).catch(e=>setErr(e.message)),[]);
+  const [dark,setDark]=useState(()=>document.documentElement.dataset.theme==="dark"), [tab,setTab]=useState("ALL"), [q,setQ]=useState(""), [msg,setMsg]=useState("");
+  useEffect(()=>{document.documentElement.dataset.theme=dark?"dark":"light";try{localStorage.setItem("theme",dark?"dark":"light")}catch(e){}},[dark]);
+  const toast=m=>{setMsg(m);setTimeout(()=>setMsg(""),2200)};
+  const load=useCallback(()=>Promise.all([call("/api/summary"),call("/api/alerts?min_risk=60&limit=300")]).then(([a,b])=>{setS(a);setAl(b);setSel(x=>x??(b[0]&&b[0].id))}).catch(e=>setErr(e.message)),[]);
   useEffect(()=>{load();const t=setInterval(load,10000);return()=>clearInterval(t)},[load]);
   if(err) return <main><div className="panel err">Cannot reach the API: {err}</div></main>;
-  if(!s) return <main><div className="empty">Loading…</div></main>;
+  if(!s) return <main><div className="stats">{[1,2,3,4].map(i=><div key={i} className="stat"><div className="skel" style={{height:30}}/></div>)}</div></main>;
+  const shown=al.filter(a=>(tab==="ALL"||a.tier===tab)&&a.label.toLowerCase().includes(q.trim().toLowerCase()));
+  const cnt=t=>t==="ALL"?al.length:al.filter(a=>a.tier===t).length;
   return <>
-    <header><h1>Upay Sentinel</h1><span>Mule-account and money-trail detection · synthetic data only</span><span className="eng">{s.engine==="c"?"C graph engine":"Python fallback engine"}</span></header>
+    <header><h1>Upay Sentinel</h1><span>Mule-account and money-trail detection · synthetic data only</span>
+      <span className="eng">{s.engine==="c"?"C graph engine":"Python fallback engine"}</span>
+      <button className="tg" onClick={()=>setDark(!dark)} aria-label="Toggle night mode">{dark?"☀️ Light":"🌙 Night"}</button></header>
     <main>
       <div className="stats">
-        <div className="stat"><b>{s.transactions.toLocaleString()}</b><small>transactions scanned</small></div>
-        <div className="stat"><b style={{color:"var(--red)"}}>{s.on_hold}</b><small>accounts on temporary hold (risk ≥85)</small></div>
-        <div className="stat"><b>{s.pending}</b><small>holds awaiting an analyst</small></div>
-        <div className="stat"><b>{s.watch}</b><small>accounts in the review band (60–85)</small></div>
+        <div className="stat"><b><Count v={s.transactions}/></b><small>transactions scanned</small></div>
+        <div className="stat"><b style={{color:"var(--red)"}}><Count v={s.on_hold}/></b><small>accounts on temporary hold (risk ≥85)</small></div>
+        <div className="stat"><b><Count v={s.pending}/></b><small>holds awaiting an analyst</small></div>
+        <div className="stat"><b><Count v={s.watch}/></b><small>accounts in the review band (60–85)</small></div>
       </div>
       <div className="cols">
         <div className="panel list"><h2 style={{padding:"14px 14px 0"}}>Alert queue</h2>
-          {al.map(a=><button key={a.id} className={"item"+(a.id===sel?" sel":"")} onClick={()=>setSel(a.id)}>
-            <div className="r"><span>{a.label}</span><span className={"tag "+a.tier}>{a.risk}</span></div>
+          <div className="tabs">{["ALL","HOLD","WATCH"].map(t=><button key={t} className={"tab"+(tab===t?" on":"")} onClick={()=>setTab(t)}>{t} {cnt(t)}</button>)}</div>
+          <input className="q" placeholder="Search account, e.g. W01247" value={q} onChange={e=>setQ(e.target.value)} aria-label="Search accounts"/>
+          {shown.map(a=><button key={a.id} className={"item"+(a.id===sel?" sel":"")} onClick={()=>setSel(a.id)}>
+            <div className="r"><span>{a.tier==="HOLD"&&a.status==="pending_review"&&<i className="dot"/>}{a.label}</span><span className={"tag "+a.tier}>{a.risk}</span></div>
             <div className="bar"><i style={{width:a.risk+"%",background:barColor(a.risk)}}/></div>
             <small>{a.top_reason.replaceAll("_"," ").toLowerCase()} · {STATUS[a.status]||a.tier.toLowerCase()}</small></button>)}
-          {!al.length&&<div className="empty">No accounts above the review threshold.</div>}</div>
-        {sel!==null?<Detail id={sel} onChanged={load}/>:<div className="panel empty">Select an alert.</div>}
+          {!shown.length&&<div className="empty">No accounts match.</div>}</div>
+        {sel!==null?<Detail id={sel} onChanged={load} toast={toast}/>:<div className="panel empty">Select an alert.</div>}
       </div>
       <Evidence s={s}/>
-    </main></>;
+    </main>
+    {msg&&<div className="toast" role="status">{msg}</div>}</>;
 }
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
