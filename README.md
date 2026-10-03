@@ -1,8 +1,7 @@
 # Upay Sentinel — AI-Powered Graph Fraud & Mule Account Detection
 
 Track 01 (Trust & Risk Intelligence), AI Dev Fest 2026 AI Hackathon, DIU CPC × upay.
-Live deployment: **<ADD YOUR RENDER URL HERE>**
-
+Live deployment: **<https://upay-sentinel.onrender.com/>**
 ## Project overview
 Scam victims send money themselves with a valid PIN/OTP, so ordinary checks see a normal transfer. Fraudsters then split the money across mule accounts and cash out at agents within minutes.
 Sentinel follows the money trail instead of checking one transaction at a time. It answers the three questions in the upay guideline: **what happened, why it is risky, what upay should do next.**
