@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+engine/*.so
+data/*.csv
+.env
+.pytest_cache/
