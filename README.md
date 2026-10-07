@@ -1,4 +1,5 @@
 # Upay Sentinel 2.0
+🌐 **Live Demo:** https://upay-sentinel.onrender.com/
 
 Synthetic fraud investigation prototype for Track 01: Trust & Risk Intelligence.
 
