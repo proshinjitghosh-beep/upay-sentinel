@@ -1,65 +1,103 @@
-# Upay Sentinel — AI-Powered Graph Fraud & Mule Account Detection
+# Upay Sentinel 2.0
 
-Track 01 (Trust & Risk Intelligence), AI Dev Fest 2026 AI Hackathon, DIU CPC × upay.
-Live deployment: **<https://upay-sentinel.onrender.com/>**
-## Project overview
-Scam victims send money themselves with a valid PIN/OTP, so ordinary checks see a normal transfer. Fraudsters then split the money across mule accounts and cash out at agents within minutes.
-Sentinel follows the money trail instead of checking one transaction at a time. It answers the three questions in the upay guideline: **what happened, why it is risky, what upay should do next.**
+Synthetic fraud investigation prototype for Track 01: Trust & Risk Intelligence.
 
-## Features
-- **Graph money-trail engine (C):** time-respecting traversal from each account's largest inflow; measures fan-out, hop depth, cash-out value reached and delay.
-- **Behavioural anomaly score (AI):** Isolation Forest over account behaviour + graph features, fit on a 70% training split and judged on held-out accounts.
-- **Network propagation (NetworkX):** accounts fed by a mule hub inherit risk, so the downstream mules are caught even when each looks ordinary alone.
-- **Business rule kept separate from ML:** fast pass-through rule, reported next to the model so you can see what the AI adds.
-- **Explainability:** every score shows reason codes and a grounded What / Why / Next narrative (template over structured evidence, no free-form LLM making decisions).
-- **Human oversight:** risk ≥85 puts a *temporary* hold on cash-out and asks for live face verification, then queues the case. An analyst confirms, releases or escalates. Nothing is blocked permanently by the model.
-- **Dashboard (React):** alert queue, live money-trail graph, analyst actions, cash-out simulator, held-out evidence table and fairness check.
+## Start
 
-## Technology stack
-C (core engine, loaded with `ctypes`) · Python 3.10+ · FastAPI · scikit-learn (Isolation Forest) · NetworkX · pandas/NumPy · Faker (synthetic data) · React 18 (served as one static page, no build step) · pytest · Render.
-No external AI APIs or secrets are used.
+Python 3.10+ is required. First installation needs internet for Python dependencies. Once installed, the UI, synthetic data, graph and map do not need internet.
 
-## Requirements
-Python 3.10+, `gcc` (optional: without it the same algorithm runs in pure Python, shown as "Python fallback engine" in the header), internet access for the CDN scripts used by the dashboard.
+**Windows:** Extract this ZIP, then double-click `START_WINDOWS.bat`. Open http://127.0.0.1:8000 after startup. The Python fallback engine runs on Windows; no GCC needed.
 
-## Installation and setup
+**Linux/macOS:** Run `./start.sh`, then open http://127.0.0.1:8000. GCC is optional and compiles the C engine when available.
+
+**Manual setup:**
+
 ```bash
-git clone <your-repo-url> && cd upay-sentinel
-./build.sh          # installs deps, generates data, compiles the C engine
+python -m venv .venv
+# Activate: Windows .venv\Scripts\activate | Linux/macOS source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m data.generate_data
+python -m uvicorn backend.app.main:app --port 8000
 ```
-Manual equivalent: `pip install -r requirements.txt && python -m data.generate_data && gcc -O2 -shared -fPIC -o engine/libsentinel.so engine/graph_engine.c`
 
-## Environment variables
-| Name | Purpose |
-|---|---|
-| `SENTINEL_API_KEY` | Optional. If set, POST endpoints require header `X-API-Key`. Open the dashboard as `/?key=YOUR_KEY`. |
-| `ALLOWED_ORIGINS` | Comma-separated CORS origins (default `*`). If the dashboard is hosted elsewhere, open it as `/?api=https://your-api-url`. |
+The ZIP includes generated CSV data. Regeneration is optional. Keep the server running; opening `frontend/index.html` directly cannot access the API.
 
-Copy `.env.example`; never commit real keys.
+## Version 2 features
 
-## Run and build commands
+- Offline dashboard written in plain JavaScript, with no React/Babel/font/CDN dependency.
+- Sidebar, persistent dark mode, responsive screens, wallet/region search, HOLD/WATCH filters.
+- Overview, Alert Queue, Money Trail, Live Monitor, Scam Simulator, Customer View, Audit Log, Evidence.
+- SQLite audit events: analyst, timestamp, notes, outcome labels and risk/evidence snapshot.
+- Case identities change when wallet transactions or scoring evidence change. Release is single-use for one subsequent simulated cash-out check on unchanged case evidence. Confirm hold or escalate revokes an unused release. Changes survive restarts on persistent disk.
+- Weighted risk contributions: graph /40, anomaly /40, rule /20. These are score points, not calibrated fraud probabilities or feature-level SHAP explanations.
+- Money-trail timeline; interactive graph and offline geographic area schematic; customer division/city centroids; synthetic agent areas including Mirpur/Uttara/Motijheel examples.
+- Agent marker inspection and flagged cash-out regional hotspots. Association is not proof of agent wrongdoing.
+- `UNUSUAL_CASHOUT_ROUTE` supporting evidence compares traced cash-out regions with that wallet's history before the inflow. No GPS, no impossible-travel inference, no location weight added to the score.
+- Fast scam, evasive scam, legitimate transfer and chronological dataset-suffix replay scenarios. Manual step and auto play. Independent replay scope; reset creates a new run without deleting old audit history.
+- Early rapid-split graph signal (`PRE_CASHOUT_FAN_OUT`) raises graph risk before completed cash-outs when a large inflow reaches at least three accounts rapidly. A separate cash-out policy pauses a review-band wallet with a recent meaningful inflow from a currently high-risk hub (`RECENT_HIGH_RISK_UPSTREAM`), unless a one-use analyst release exists. This policy is separate from the model score and is returned in cash-out results.
+- Frozen Isolation Forest trained on the first 70% of transactions in time. Replay features use observed transactions only. Cash-out gate is checked before a cash-out event is appended.
+- Customer warning preview, in English and Bangla, for risky recipients or large first-time-recipient transfers. Review/Cancel flow; no money is sent.
+- JSON case evidence and audit exports. Analyst outcome labels are stored for future validation, not automatic online retraining.
+- Positive, finite demo cash-out amounts up to Tk 1,000,000; bounded strings and API inputs; optional API key on mutations.
+
+## Demo walkthrough
+
+1. Open Overview and inspect top batch alerts, regional hotspots and Evidence.
+2. Open Alert Queue, select a wallet, compare Graph/Map, inspect an agent marker and the timeline.
+3. Enter analyst name/note/outcome. Confirm a hold; check cash-out. Release once; check again. A further check is held again if risk remains high. Export the case evidence.
+4. Open Scam Simulator, select Fast mule ring and press Reset / New run. Step through transfers or Auto play. Inspect focus contributions, rule-vs-model output and cash-out request metrics.
+5. Compare the Evasive and Legitimate scenarios. Reset clears only the current replay state; past audit runs remain in SQLite.
+6. Open Customer View and review a large transfer to a risky/new recipient; cancel it.
+7. Open Audit Log to view/export current-scope history.
+
+Live Monitor uses a local synthetic replay, not a production transaction feed. Batch and replay scopes are selectable at the top. Replay state/model lives in memory; restarting starts a new run. Audit records remain on disk.
+
+## Evidence and honest limitations
+
+Batch evidence retains the original 70/30 account holdout and is a **retrospective synthetic comparison**. It is not an isolated fraud-ring holdout: graph edges may cross account splits. The original fraud cash-out fraction scored high using the completed ledger is not money prevented or recovered.
+
+Replay trains on an earlier chronological prefix and updates only from observed events. It evaluates each cash-out request using prior evidence. Ledger events are then appended even if the parallel gate recommends pause: this is a **counterfactual gate comparison**, not a real blocked ledger. Subsequent observations may produce alerts even though the first cash-out was missed. Metrics show observed fraud cash-out requests, amount that the prior-evidence gate would pause, legitimate requests paused, and first focus-review delay. No promise that every scenario is caught early.
+
+The synthetic account labels are used for evaluation, not scoring. Replay evaluations on a tiny scripted sample do not establish accuracy. Original generator cash-out agent choices are random; location history is illustrative and not a validated geography model. New/established account fairness gaps reflect synthetic generation assumptions. City/agent coordinates and the SVG outline are approximate. Customers have no precise personal locations.
+
+Graph traversal remains a time-respecting heuristic from each wallet's largest inflow; it does not perform balance-conserving forensic attribution. Value reaching an agent can include other money and should not be described as recovered victim funds. The fast rule's pass-through ratio is aggregate ledger behaviour, not exact flow attribution. Score weights are hand-set and need governed validation.
+
+Face verification is a simulated **request**, not an implemented biometric check. No transfers, holds, customer authentication or real-world financial decisions occur. Analyst identity is a demo text field, not authenticated identity. Outcome labels require human review before use in retraining. This is a single-worker prototype; large-scale ingestion, drift monitoring, immutable/tamper-evident audits, role-based access, expiring holds and production authentication remain future work.
+
+## Security / configuration
+
 ```bash
-uvicorn backend.app.main:app --reload --port 8000   # dashboard at http://localhost:8000
+# Optional mutation protection; set in your terminal before starting:
+# Linux/macOS: export SENTINEL_API_KEY='your-secret'
+# Windows CMD: set SENTINEL_API_KEY=your-secret
 ```
-Deploy: push to GitHub, create a Render web service from `render.yaml` (build `./build.sh`).
 
-## Testing instructions
+For the demo, open `/?key=your-secret`. URL keys can appear in history/logs; use a proper authenticated session for production. Read endpoints expose synthetic-only evidence and are not authenticated. `ALLOWED_ORIGINS` defaults to localhost/127.0.0.1 on port 8000. `SENTINEL_DB` selects the SQLite path; default `data/sentinel.sqlite3`. Set a durable writable path on hosted deployments. Ephemeral hosting disks do not preserve the database across redeployments. Launch with one worker; replay state is not shared across workers. The app does not automatically load `.env`; set environment variables explicitly or use Uvicorn's env-file option with its required dependency.
+
+No external map tile or AI API service is used. First-time pip installation uses external package repositories. The frontend can use `?api=https://your-api` when hosted separately with matching CORS.
+
+## Tests
+
 ```bash
 python -m pytest -q backend/tests
 ```
-Checks: C engine equals the Python fallback; dataset size and 5% fraud rate; a hand-built mule ring is traced correctly; held-out precision/recall floor; API hold → release flow. Manual check: open the dashboard, pick the top alert, press **Check cash-out** (expect HOLD AND VERIFY), press **Release as legitimate** and check again.
 
-## Other configuration
-API: `GET /api/summary`, `GET /api/alerts`, `GET /api/alerts/{id}`, `POST /api/alerts/{id}/decision`, `POST /api/check-cashout`, `GET /api/health`. Interactive docs at `/docs`.
+Eleven tests cover engine/fallback agreement, dataset shape, a known mule trail, original synthetic holdout floors, API flow, invalid amounts/IDs, persistent single-use release, changed-evidence invalidation, frozen-model replay and no future cash-out input, API-key enforcement and location/warning fields. Tests use temporary databases for the new product cases.
 
-## Synthetic data assumptions (documented per upay guideline §11)
-1,300 customers, 40 agents, 60 merchants; 30 days; 10,000 transactions of which ~5% are fraud. Normal customers send to ~6 usual contacts, pay merchants, cash in/out with lognormal amounts around their own scale. Fraud rings: victim → hub mule (৳15k–90k) → 3–5 mules → agent cash-out; 30% of rings are "evasive" and wait ~16 min before splitting. No real personal data. Times are Bangladesh time (UTC+6).
+## APIs
 
-## Responsible AI
-Privacy: synthetic only. Explainability: reason codes + narrative. Fairness: hold-rate and wrongly-held rate by region and account age on the dashboard. Human oversight: holds are temporary and reviewed. Security: optional API key, input validation.
+`GET /api/health`, `/api/summary`, `/api/alerts`, `/api/alerts/{id}`, `/api/audit`, `/api/hotspots`, `/api/agents/{id}`, `/api/replay`.
 
-## Limitations (be upfront with judges)
-- The data is simple and self-generated, so scores are very high (held-out AUC ≈ 1.0). At the ≥85 hold line the plain pass-through rule performs about as well as the full model; the model's gain is in the 60–85 review band, which catches the evasive rings the rule misses. Treat numbers as method comparison, not production accuracy.
-- Scoring is a batch pass over the dataset. A streaming version would update trails as each transaction arrives.
-- Rule and score weights were hand-set on synthetic data and need recalibration with governed real data.
-- Fairness grouping uses only synthetic region and account age.
+`POST /api/alerts/{id}/decision`, `/api/check-cashout`, `/api/sender-check`, `/api/replay/reset`, `/api/replay/step`.
+
+Read/decision/cash-out APIs accept `?scope=batch` or `?scope=replay` (default batch). Interactive schema: `/docs`. The replay step endpoint ingests the next local queued record, not arbitrary external records.
+
+## Architecture
+
+C / Python time-respecting trace → NetworkX propagation + Isolation Forest + separate rule → FastAPI → analyst action and SQLite audit. The replay trains once on a historical prefix, then reuses its frozen model; it currently recomputes features over the observed ledger per event and is not optimized streaming infrastructure.
+
+Deployment configuration from the original project remains in `render.yaml`. This package has not been pushed or deployed.
+
+## Verified sample outcomes
+
+On the supplied seed, the fast scripted ring pauses Tk 53,700 in three requests using the separate upstream policy; first focus review is at 180 seconds. The evasive scenario pauses zero of Tk 53,700 and only reaches review after the first cash-out (1,300 seconds). The legitimate scripted case pauses zero requests. These are tiny synthetic demonstrations, not production performance.

@@ -38,7 +38,8 @@ def test_holdout_quality(s):
     assert m["sentinel"]["precision"] >= 0.9 and m["sentinel_watch_or_above"]["recall"] >= 0.9
 
 
-def test_api_flow():
+def test_api_flow(tmp_path, monkeypatch):
+    monkeypatch.setenv("SENTINEL_DB", str(tmp_path / "api.sqlite3"))
     with TestClient(app) as c:
         top = c.get("/api/alerts").json()[0]
         assert top["tier"] == "HOLD"

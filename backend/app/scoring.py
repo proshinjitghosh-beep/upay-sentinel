@@ -41,7 +41,7 @@ class Sentinel:
         self._fit(seed)
 
     # ------------------------------------------------------------------ model
-    def _fit(self, seed):
+    def _fit(self, seed, frozen=False):
         t, a = self.t, self.a
         N = len(a)
         roles = a.role.values
@@ -62,6 +62,11 @@ class Sentinel:
         # graph score (C-engine features) + one-hop propagation from high-risk upstream accounts
         speed = np.where(F.dwell >= 0, 1 - np.minimum(F.dwell / 900, 1), 0)
         own = F.cashout_ratio * (.5 * np.minimum(F.reach / 6, 1) + .3 * np.minimum(F.depth / 2, 1) + .2 * speed)
+        # A rapid meaningful split can be visible before any cash-out completes.
+        early = ((F.max_in >= 15000) & (F.reach >= 3) & (F.dwell >= 0)
+                 & (F.dwell <= 900) & (F.pass_through >= .7)).astype(float) * .85
+        own = np.maximum(own, early)
+        F["early_split"] = early
         G = nx.DiGraph()
         for r in t.itertuples():
             if G.has_edge(r.src, r.dst):
@@ -85,9 +90,11 @@ class Sentinel:
         train, F["split"] = perm[: int(len(perm) * .7)], "n/a"
         F.loc[perm[: int(len(perm) * .7)], "split"] = "train"
         F.loc[perm[int(len(perm) * .7):], "split"] = "test"
-        iso = IsolationForest(n_estimators=200, random_state=seed).fit(F.loc[train, FEATS])
-        raw = -iso.score_samples(F[FEATS])
-        ref = np.sort(raw[train])
+        if not frozen:
+            self.iso = IsolationForest(n_estimators=200, random_state=seed).fit(F.loc[train, FEATS])
+            self.ref = np.sort(-self.iso.score_samples(F.loc[train, FEATS]))
+        raw = -self.iso.score_samples(F[FEATS])
+        ref = self.ref
         F["anomaly"] = np.searchsorted(ref, raw) / len(ref)
 
         F["risk"] = np.where(roles == "customer",
@@ -115,7 +122,7 @@ class Sentinel:
             sentinel=_pr(y, te.risk.values >= HOLD), sentinel_watch_or_above=_pr(y, te.risk.values >= WATCH), rule_only=_pr(y, te.rule.values == 1),
             anomaly_only=_pr(y, te.anomaly.values >= .95),
             auc=round(float(roc_auc_score(y, te.risk)), 3) if 0 < y.sum() < len(y) else None,
-            fraud_cashout_value_held=round(float(fr.amount.values[held].sum() / fr.amount.sum()), 3),
+            fraud_cashout_value_held=round(float(fr.amount.values[held].sum() / max(fr.amount.sum(), 1)), 3),
         )
         nm = c[c.is_mule == 0]
         self.fairness = {}
@@ -133,6 +140,8 @@ class Sentinel:
 
     def reasons(self, i):
         f, out = self.F.loc[i], []
+        if f.early_split:
+            out.append(("PRE_CASHOUT_FAN_OUT", "A meaningful inflow rapidly reached at least three accounts; graph structure can raise risk before a cash-out completes."))
         if f.rule:
             out.append(("RAPID_PASS_THROUGH", f"Received {_tk(f.max_in)} and forwarded {f.pass_through:.0%} of inflow within {dur(f.dwell)}."))
         if f.reach >= 3:

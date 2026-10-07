@@ -106,6 +106,11 @@ def main(out_dir=OUT, seed=42):
         w.writerow(["account_id", "role", "label", "name", "region", "age_band", "is_mule"])
         for a in accts:
             w.writerow([a[k] for k in ("account_id", "role", "label", "name", "region", "age_band", "is_mule")])
+    # Persist synthetic area coordinates for reproducibility; customer points are centroids.
+    import pandas as pd
+    from backend.app.product import add_locations
+    frame = pd.read_csv(os.path.join(out_dir, "accounts.csv")).set_index("account_id", drop=False)
+    add_locations(frame).to_csv(os.path.join(out_dir, "accounts.csv"), index=False)
     print(f"{len(allr)} transactions, {len(fraud)} fraud ({len(fraud)/len(allr):.1%}), {len(used)} mule accounts")
 
 
