@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: upay-sentinel
+    runtime: python
+    buildCommand: ./build.sh
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: SENTINEL_API_KEY
+        sync: false
